@@ -1,0 +1,4 @@
+3.
+Still learning jQuery, sorry for the crude javascript.
+
+Sample RSS feed comes from boingboing.net.

@@ -1,0 +1,141 @@
+<html>
+  <head>
+    <title>Shortest Distance</title>
+    <link href='http://fonts.googleapis.com/css?family=Titillium+Web' rel='stylesheet' type='text/css'>
+    <style>
+      body {
+        position: absolute;
+        top: 0; bottom: 0;
+        left: 0; right: 0;
+        margin: 0; padding: 0;
+        font-family: 'Titillium Web';
+      }
+      #map {
+        position: absolute;
+        top: 0; bottom: 0;
+        left: 0; right: 301px;
+        border-right: 2px solid #333;
+      }
+      #locations {
+        position: absolute;
+        right: 0;
+        top: 0; bottom: 0;
+        width: 300px;
+        background: url(nami.png);
+        padding: 10px 0;
+      }
+      #locations p {
+        background: #666;
+        color: #fff;
+        font-size: 15px;
+        padding: 10px;
+        text-shadow: 0 1px 0 rgba(32, 32, 32, 0.7);
+        border-bottom: 10px solid #444;
+        border-top: 1px solid #aaa;
+        margin: 0;
+        text-align: center;
+        white-space: pre-line;
+      }
+      
+      .car-info {
+        padding: 10px 0;
+        border-bottom: 10px solid #444;
+      }
+      .car-info input {
+        position: absolute;
+        right: 15px;
+      }
+
+      .car-marker {
+        cursor: pointer;
+        position: relative;
+        display: inline-block;
+        height: 44px;
+      }
+      #car1-info {
+        background: #eb5c5c;
+        color: #f4f4f4;
+      }
+      
+      #car2-info {
+        background: #8a9bf8;
+        color: #f4f4f4;
+      }
+      /* Car marker images from http://turbomilk.com/portfolio/icons/autokadabra-icons/ */
+      #c1-start {
+        width: 74px;
+        background: url(car-markers.png) no-repeat;
+        background-position: 0px 0px;
+        left: 60px;
+      }
+      #c1-end {
+        width: 74px;
+        background: url(car-markers.png) no-repeat;
+        background-position: -73px 0px;
+        left: 90px;
+      }
+      #c2-start {
+        width: 44px;
+        background: url(car-markers.png) no-repeat;
+        background-position: -146px 0px;
+        left: 74px;
+      }
+      #c2-end {
+        width: 44px;
+        background: url(car-markers.png) no-repeat;
+        background-position: -189px 0px;        
+        left: 134px;
+      }
+      ul  {
+        padding: 0;
+        margin: 0 0 10px 0;
+      }
+      ul li {
+        list-style-type: none;
+        padding: 2px 10px;
+        line-height: 1.4em;
+      }
+      .hidden {
+        visibility: hidden;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+    <div id="locations">
+      <div id="locations-background"></div>
+      <p>Drag the cars onto the map
+        - or - 
+        Input lat/lon</p>
+      <div id="car1-info" class="car-info">
+        <ul class="start">
+          <li>Starting Latitude: <input type="text" class="lat"></li>
+          <li>Starting Longitude: <input type="text" class="lng"></li>
+        </ul>
+        <ul class="end">
+          <li>Ending Latitude: <input type="text" class="lat"></li>
+          <li>Ending Longitude: <input type="text" class="lng"></li>
+        </ul>
+        <div id="c1-start" class="car-marker"></div>
+        <div id="c1-end" class="car-marker"></div>
+      </div>
+      <div id="car2-info" class="car-info">
+        <ul class="start">
+          <li>Starting Latitude: <input type="text" class="lat"></li>
+          <li>Starting Longitude: <input type="text" class="lng"></li>
+        </ul>
+        <ul class="end">
+          <li>Ending Latitude: <input type="text" class="lat"></li>
+          <li>Ending Longitude: <input type="text" class="lng"></li>
+        </ul>
+        <div id="c2-start" class="car-marker"></div>
+        <div id="c2-end" class="car-marker"></div>
+    </div>
+    <div id="shortest-distance-container">
+      <p>Shortest Distance: <span id="shortest-distance">0</span> mi</p>
+    </div>
+  </body>
+  <script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?sensor=false"></script>
+  <script type="text/javascript" src="jquery-1.10.1.js"></script>
+  <script type="text/javascript" src="lyft.js"></script>
+</html>

@@ -1,0 +1,34 @@
+h1 {
+  line-height: 2em;
+  font-size: 150%;
+  background: #333;
+  color: #fff;
+}
+#articles {
+  padding: .5em;
+}
+.item {
+  padding: .2em;
+}
+#controls {
+  border: 1px solid silver;
+  float: left;
+  margin-top: 1em;
+}
+#left-arrow, #right-arrow {
+  float: left;
+  cursor: pointer;
+  width: 3em;
+  text-align: center;
+  color: #fff;
+  background: #333;
+  padding: 0 1em;
+  border-right: 1px solid silver;
+}
+#left-arrow:hover, #right-arrow:hover {
+  background: #666;
+}
+#left-arrow:active, #right-arrow:active {
+position: relative;
+  top: 1px;
+}

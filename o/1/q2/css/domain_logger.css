@@ -1,0 +1,46 @@
+.head {
+  background: #2c3034;
+}
+.error, .success {
+  border: 1px solid #666;
+  -moz-border-radius: 5px;
+  -webkit-border-radius: 5px;
+  padding: .5em;
+  margin-bottom: 1em;
+}
+.error p, .success p {
+  margin: .5em;
+}
+.error {
+  background: #c9181d;
+  color: #fff;
+}
+.success {
+  background: #11ec40;
+  color: #fff;
+}
+#main-container {
+  border: 1px solid silver;
+  margin: 1em auto;
+  padding: 1em;
+  width: 90%;
+}
+table {
+  border: 1px solid #555;
+}
+th {
+  background: #2c3034;
+  color: #eee;
+  border: 1px solid silver;
+  padding: .4em;
+  font-size: 110%;
+  font-weight: bold;
+}
+td {
+  padding: .5em;
+  max-width: 30em;
+  overflow: hidden;
+}
+.even {
+  background: #f3f3f3;
+}

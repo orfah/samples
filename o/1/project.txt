@@ -1,0 +1,97 @@
+Programming Exercises
+                                             
+1. is_phish()
+-------------
+
+Imagine that you run a very popular URL shortening service (similar to
+bit.ly, is.gd, etc.), and want to prevent malicious users from masking
+phishing sites with your service. One way you might do this is to check
+submitted URLs against the PhishTank Web site to see if it considers
+them to be phishes. Using the information at
+http://www.phishtank.com/developer_info.php, implement a PHP function
+called is_phish() that performs this check. Your function should have
+the signature "bool is_phish(string $url)". Because your service is so
+popular, it sees over 50 new URLs per second, so keep that in mind when
+interacting with PhishTank.
+
+Submit your implementation as a text file.
+
+
+2. Domain Tagging, Jr.
+----------------------
+
+Create an application using PHP and MySQL that hundreds of thousands of
+Internet users will use to track Web site domain names and accompanying
+descriptions.
+
+Your application should provide two Web pages:
+   1. One that allows users to submit one domain and description at a 
+	   time.
+   2. One that displays all valid domains along with their descriptions
+      and the submission date, ordered from newest to oldest.
+
+For our purposes, a valid domain is one that has one or more IP
+addresses in the DNS.
+
+Your applications should include a table called "domain" that stores:
+   1. the domain name, whether or not it is valid
+   2. the description
+   3. the date and time of submission.
+
+Keep in mind that users might attempt to submit any sort of text-like
+data as a domain, e.g., "http://www.opendns.com/about/",
+"notareal.comdomain", or pretty much anything else.
+
+Also, domains should be stored in the database without any "www" prefix
+and without any other URL components. For example,
+"http://www.opendns.com/about/" should be stored as "opendns.com".
+
+Submit your implementation as one or more text files. Be sure to include
+the CREATE DATABASE and CREATE TABLE statements that your implementation
+requires.
+
+
+3. Blogrum a la jQuery
+----------------------
+ 
+You run a site with a blog and a forum, and you want to show some of
+your recent blog posts in your forum's header.  Unfortunately, you
+don't have the ability to add server-side code to your forum software.
+Using jQuery, create a script that will fetch your blog's RSS feed and
+display links to the three most recent posts in a page element.  Also,
+include paging functionality to allow the viewer to see the rest of
+the posts, three at a time.  For the sake of this example, assume that
+both the blog and the forum are on the same domain.
+
+
+4. The annoying load balancer
+-----------------------------
+
+Imagine that you have a non-session-persisting load balancer in front of
+a cluster of web servers (n >= 3). Since this load balancer doesn't
+direct requests in any persistent fashion, a user making subsequent
+requests may be directed to any of the servers available in the cluster
+in a non-deterministic manner. In your application, you need to handle
+image uploads from users, and as soon as the upload is finished, you
+need to show the user their uploaded image. This creates a problem for
+you because after an upload, the load balancer may direct the user to a
+web server which does not have the users recently uploaded image
+resulting in a 404 Not Found for the image request and a poor user
+experience.
+
+In the current system, an rsync process runs every 5 minutes and copies
+uploaded images around to each server so that every server has every
+file, eventually. This isn't a very optimal solution because users may
+not see their uploaded images for up to 5 minutes depending on which
+server they are connecting to for any given request and it forces every
+server to have a copy of every image uploaded, which may not be the most
+scalable solution.
+
+Assuming you could not modify the load balancer, how would you redesign
+or fix this system so that files are uploaded in a way that it doesn't
+matter which server in a cluster a user connects to in order to be able
+to satisfy a request for the file? There are many ways to solve this
+problem. Please describe one or more ways and discuss the pros and cons
+of your solution(s). If your solution is very simple (not a bad thing),
+consider offering a couple alternate solutions so we have a strong
+understanding of how you evaluate and approach problems.

@@ -1,0 +1,17 @@
+1. is_phish.php
+
+The problem mentions that this service will be used 50/s, which will almost certainly go over the rate threshold of the PhishTank api.  Because of this, I've decided to write a quick import script that takes the csv database file and imports into a mysql database (the schema and update commands can be found in the sql subdirectory).  
+
+Instead of using the database, an alternative method would be to do a quick grep through the csv file; if a line exists, then it is a phishing url.  However, this method would most likely leverage caching layers -- memcache if we had multiple servers, apc cache otherwise -- and the webserver I rent doesn't have those capabilities.  But it does have mysql, so that's the reason I'm using the db.  
+
+I think it's arguable which method is faster or better; certainly, the db solution requires building and teardown of the db handle, versus the potential overhead of going to disk to do a grep search.  I would have to do further benchmarks to determine whether one solution far out performs the other, but my feeling is that the db method ends up being faster and more robust.  MySQL connections and teardowns occur very quickly (the traditional advice is to not use persistent connections, as the overhead is negligible) and I would bet that url lookups occur on something of an exponential style (that is, the most searched url will be of an order of magnitude more than the next most searched, etc) and MySQL query caching benefits greatly from this anticipated workload.
+
+But we're locked in to the current format of the csv file.  If that changes or disappears, we have to recreate or edit the import script.  The grep method obviously does not lock us in to a particular file format, just the concept that *only* phish urls are included in the file.  And the db method obviously involves some small amount of database maintenance.
+
+To finish this off, we would need a cron job to pull the updated phishing data file and refresh the db.  Probably, this would be set up as follows:
+1. create temp table w/ same schema
+2. import new data in to temp table
+3. run a "rename table" style query.  MySQL docs say this locks the table from reads, so it should be atomic
+
+I also made a quick (5m) UI wrapper around the is_phish function.
+http://www.legomorph.net/opendns/q1/is_phish_ui.php

@@ -1,0 +1,51 @@
+4. 
+I think the easiest solution would be to set up a round-robin approach to finding the file.  That is, have each server, upon failing to find the file, return a 302 code to the user which points directly at the next server, and a locally kept "recently seen" file -- in the form of user ip and file name -- so that on the users second attempt (we've cycled), we give up and return a 404 page.
+
+Pros:
+This approach lets us have a single copy of the file on each server and would remove the 5m delay for an image to be found.
+Simple. This could probably be solved with an apache include file.
+
+Cons:
+Given that space is (relatively) cheap, I think it makes sense to have multiple, redundant copies of the same file.  At least two servers in the cluster should have a copy of the file; if a 5m delay is bad user experience, certainly "Sorry, we lost your file" is a worse one.
+The chaining is brittle.  If the next server goes down, we would be redirecting everyone to a broken link.
+If the file doesn't exist, we bother each server for each user trying to find the file.  This could potentially be a DOS style exploit if discovered.
+If we have a lot of servers, we might trigger the "too many redirects" browser error.
+We expose the individual server behind the load balancer, which is not great.
+
+=====================
+Alternative Solution:
+Set up memcache on the boxes for recently uploaded images.  The key in this case would be the file name, the value would point to the server and location of the file (simple url style).
+
+Pros:
+Also removes the 5m delay for an image to be found.
+
+Cons:
+Still puts us at one copy of the file.  If we continue to rsync the files, as we grow the number of servers behind the load balancer, we stop scaling well.
+It's possible but unlikely that we could exhaust memcache.  However, if we use memcache for other things, I could see the file keys being expired before the 5m copy cycle is finished.
+
+=======================
+Alternative Solution 2:
+Break the servers into pairs, use memcache to store which pair the image can be found on.  Something like file name is the key, the value is comma delimited cluster number and server relative url (eg "2,/images/file.jpg").  This would require a config which defines the cluster-to-server mapping.
+
+Pros:
+Also removes the 5m delay for an image to be found.
+We achieved redundancy!
+
+Cons:
+Increases hardware costs.
+Coupling could be somewhat fragile, adding/removing a server requires potentially altering a config file which defines the couplings
+We may need to track server health to ensure we don't point users to downed servers.
+rsync process would need to be more clever, who's syncing to where, etc
+
+=======================
+Alternative Solution 3:
+Buy a filer. :)
+
+Pros:
+Easy.
+
+Cons:
+Expensive.
+
+==============================
+I would advocate solution 2.  I think this is the greatest balance of reliability for the user while still being cost effective for us.  The down side is that it requires more initial engineering hours to set up the system appropriately, but I think the redundancy we gain is worth it.
