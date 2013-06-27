@@ -168,9 +168,6 @@ module Distance
     o[:car1].collect! { |p| p.to_f }
     o[:car2].collect! { |p| p.to_f }
 
-    pp o[:car1]
-    pp o[:car2]
-
     c1_start = Point.new(o[:car1][0], o[:car1][1])
     c1_end   = Point.new(o[:car1][2], o[:car1][3])
     c1 = Car.new(c1_start, c1_end)
