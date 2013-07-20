@@ -1,0 +1,113 @@
+Doing programatic load balancing is going to have a severely detrimental effect
+on performance.  Because healthchecks and availability are basically checks of 
+state, I think the library would better suited as an out-of-band suite of scripts
+which would allow for a solution with more permanence.  If I was actually tasked
+with this project, I would lobby pretty hard that we not base our load balancer
+on something to be manipulated at request time -- the overhead is simply too great
+for a service which we need to be highly available and responsive.
+
+So with that out of the way, let me explain the main tenets of the programatic api.
+
+Although services like Akamai allow for multiple types of healthchecks, like tcp or udp
+connections, this library is focused on simple HTTP GET protocols to perform checks.
+
+Features
+========
+
+Host Resolution
+---------------
+This load balancer library defines a number of distinct types of host resolution: 
+round-robin, load feedback, random, and asymmetrical load.
+
+Round-robin is simplest; the algorithm simply shuffles between each defined host.
+
+Load feedback routes traffic to the least busy host, and requires additional 
+set up to define a usage number and target.  This number must be presented by each 
+host behind the load balancer, and allows us to make smart(er) decisions about 
+which host is best able to respond to incoming requests.  The load feedback number 
+has no units, as it is up to each host to determine what metrics best represent usage.
+
+In the instance that a host is overburdened, the load balancer will immediately shift
+traffic away.  This could result in a "ping-ponging" effect, where host A will
+immediately shed too much traffic to host B, which will overburden B, and then shift
+traffic to A.
+
+Random routes a random host behind the balancer.
+
+Asymmetric mode defines host porportions.  Two hosts with asym_targets of 100 and 200,
+respectively, will be chosen 1/3 and 2/3 of the time.
+
+Lazy or On-Demand Healthcheck
+-----------------------------
+Healthcheck will not be performed until a host is requested.  However, it is possible
+to immediately initiate a healthcheck by calling "check", which will populate the state
+hash.
+
+View Load Balancer State
+------------------------
+After every healthcheck, the state of the world according to the balancer will be
+written out.  This library supports a Redis plugin to track state, otherwise, defaults
+to writing and reading a JSON file in /tmp.
+
+Dependencies
+============
+
+typhoeus gem
+------------
+Healthchecks at run time are going to be constrained by determining the state of the
+world.  If a load balancer is managing multiple hosts, then we need an efficient
+and fast method to perform multiple connection checks.  The typhoeus gem is an
+implementation of the libcurl library and supports multiple parallel GET requests
+(multicurl), which allows us to significantly speed up healthchecks.
+
+redis instance and ruby gem (optional)
+--------------------------------------
+Redis (and the associated ruby library) is an optional addition.  If the deployed
+system has a supported and configured instance of redis running, we can store state
+in redis and avoid constant disk access.
+
+Configuration
+=============
+
+
+Edge Cases
+==========
+Flapping
+--------
+Flapping occurs when a healthcheck toggles between the up/down state.  The algorithm
+for handling flap detection is a simple heuristic which weighs previous healthchecks.
+In the instance that a host is declared to be flapping, the host is treated as if it
+were down.
+
+All Down
+--------
+In the all down state, all hosts behind the load balancer have returned a down state
+during healthcheck.  In this situation, we perform as if the load balancer was 
+configured to behave as round-robin, and all hosts are up.  All down for a valid web 
+property is likely a configuration error, and we would prefer that the end user 
+experience is degraded -- slow or only partially rendered, say -- as opposed to timing 
+out.
+
+Additional Requirements
+=======================
+Any deployment of this load balancer would be best served by having a robust monitoring
+system behind it.
+
+Examples
+========
+# default configured as round-robin
+lb = Balancer::LoadBalancer.new('rotation-name')
+h1 = Balancer::Host.new('http://hostname1.com/healthcheck_target')
+h2 = Balancer::Host.new('http://hostname2.com/healthcheck_target')
+lb.add_host(h1)
+lb.add_host(h2)
+lb.host # h1
+lb.host # h2
+lb.host # h1
+
+lb = Balancer::LoadBalancer.new('rotation-name')
+lb.config('/path/to/config')
+
+lb = Balancer::LoadBalancer.new( :cname => 'cname', 'hosts' => [h1, h2] )
+
+
