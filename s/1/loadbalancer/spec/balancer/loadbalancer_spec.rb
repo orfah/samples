@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Balancer do
+describe Balancer::LoadBalancer do
   let(:lb)   { Balancer::LoadBalancer.new('balancer') }
   let(:h1)   { Balancer::Host.new('localhost/test1') }
   let(:h2)   { Balancer::Host.new('localhost/test2') }
@@ -129,7 +129,7 @@ describe Balancer do
   describe ".log_state" do
     before(:each) do
       lb.hosts = [h1, h2] 
-      h2.instance_eval { @state = false }
+      h2.stub(:state).and_return('down')
     end
 
     it "asks the hosts what their state is" do
@@ -148,9 +148,11 @@ describe Balancer do
 
   describe ".alert_state_change" do
     let(:alert_hook)   { lambda { |h| true } }
-    before do 
+    before(:each) do 
       lb.hosts = [h1, h2]
       lb.stub(:state).and_return( { h1.id => 'up', h2.id => 'up' } )
+      h1.stub(:state).and_return('up')
+      h2.stub(:state).and_return('up')
     end
 
     context "when the alert hook is not defined" do
@@ -161,14 +163,39 @@ describe Balancer do
 
     context "when the alert hook is defined" do
       before do
-        lb.stub(:state).and_return( { h1.id => 'flapping', h2.id => 'up' } )
-        lb.alert_hook = alert_hook
+        lb.alert_hooks << alert_hook
       end
 
-      it "calls the alert hook" do
-        alert_hook.should_receive(:call).once
-        lb.alert_state_change
+      context "when one host has changed state" do
+        before do
+          h1.stub(:state).and_return('flapping')
+        end
+        
+        it "calls the alert hook" do
+          alert_hook.should_receive(:call).once
+          lb.alert_state_change
+        end
       end
+
+      context "when multiple hosts have changed state" do
+        before do
+          h1.stub(:state).and_return('flapping')
+          h2.stub(:state).and_return('down')
+        end
+
+        it "calls the alert hook for each host that has changed state" do        
+          alert_hook.should_receive(:call).twice
+          lb.alert_state_change
+        end
+      end
+
+      context "when no changes to the state are observed" do
+        it "does not run the alert hook" do
+          alert_hook.should_not_receive(:call)
+          lb.alert_state_change
+        end
+      end
+
     end
   end
 
@@ -200,12 +227,23 @@ describe Balancer do
     end
 
     context "when the ttl has expired" do
-      before { lb.instance_eval { @last_check_time = Time.now - 100000 } }
+      let(:r) { double(:redisstate) }
+      before do
+        r.stub(:last_check).and_return(Time.now - 1000000)
+        # what's a better way to do this? really awk...
+        rs = r
+        lb.instance_eval { @state_handler = rs }
+      end
+
       it { should == true }
     end
 
     context "when the ttl is fresh" do
-      before { lb.instance_eval { @last_check_time = Time.now - 10 } }
+      let(:rs) { double(:redisstate) }
+      before do
+        lb.stub(:pick_state_handler).and_return(rs)
+        rs.stub(:last_check).and_return(Time.now - 10)
+      end
       it { should == false }
     end
   end

@@ -38,8 +38,7 @@ module Balancer
     attr_accessor :mode
     attr_accessor :ttl
     attr_accessor :persistent
-    attr_accessor :alert_hook
-    attr_reader :last_check_time
+    attr_accessor :alert_hooks
 
     ROUND_ROBIN_MODE = 'round-robin'
     LFB_MODE = 'lfb'
@@ -57,20 +56,33 @@ module Balancer
         instance_eval(&block)
       end
 
-      @state_handler = defined?(Redis) ? RedisState.new : FileState.new
+      @hosts = []
+      @alert_hooks = []
+      @state_handler = pick_state_handler
+      @state_handler.name = cname
+    end
+
+    def pick_state_handler
+      $HANDLERS.each do |state_handler|
+        if state_handler.available?
+          return state_handler.new
+        end
+      end
+
+      raise RuntimeError, "No available state handler!"
     end
 
     def init_with_hash(hash)
       hash.each_pair do |arg, value|
         arg = arg.downcase.to_sym
 
-        send(arg, val) if self.respond_to?(arg)
+        send(arg.to_s + '=', value) if self.respond_to?(arg)
       end
     end 
 
     def config(config_path)
       raise "Config file does not exist! #{config_path}" unless File.exist? config_path
-      c = YAML.load(config_path)
+      c = YAML.load_file(config_path)
       hosts = c.delete('hosts') || []
 
       init_with_hash(c)
@@ -133,7 +145,7 @@ module Balancer
     # Performs a polling of all hosts behind this load balancer.
     #
     def check
-      @last_check_time = Time.now
+      @state_handler.last_check = Time.now
       hydra = Typhoeus::Hydra.new
       @hosts.each do |h|
         hydra.queue h.healthcheck_request
@@ -155,10 +167,12 @@ module Balancer
     end
 
     def alert_state_change
-      unless @alert_hook.nil?
-        @hosts.each do |h|
-          if state[h.id] and state[h.id] != h.state
-            @alert_hook.call(h)
+      unless @alert_hooks.nil?
+        @alert_hooks.each do |alert_hook|
+          @hosts.each do |h|
+            if state[h.id] and state[h.id] != h.state
+              alert_hook.call(h)
+            end
           end
         end
       end
@@ -172,7 +186,8 @@ module Balancer
     end
 
     def ttl_expired?
-      @last_check_time.nil? or @last_check_time < (Time.now - ttl)
+      last_check = @state_handler.last_check
+      last_check.nil? or last_check < (Time.now - ttl)
     end
   
     def mode

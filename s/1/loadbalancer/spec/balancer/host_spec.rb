@@ -61,11 +61,6 @@ describe Balancer::Host do
         expect(h.healthcheck(full_response: true)).to be_instance_of(Typhoeus::Response)
       end
     end
-
-    context "when the host times out" do
-
-    end
-
   end
 
   describe ".healthcheck_request" do
@@ -103,6 +98,30 @@ describe Balancer::Host do
     context "when the host is flapping" do
       before { h.stub(:flapping_score).and_return(300) }
       it { should == false }
+    end
+  end
+
+  describe ".flapping_score" do
+    subject { h.flapping_score }
+    context "when no checks have occurred yet" do
+      it { should == 0 }
+    end
+
+    context "when over 18 checks have occurred" do
+      before do
+        h.instance_eval { @state_history = 0xfffff }
+      end
+
+      it { should == 0 }
+    end
+
+    context "when the host has frequently changed state" do
+      before do
+        h.instance_eval { @state_history = 0xaaaaa }
+      end
+
+      # above the threshold
+      it { should be > 0.3 }
     end
   end
 

@@ -65,7 +65,7 @@ module Balancer
     attr_reader :last_response
 
     def initialize(*args, &block)
-      @state_history = 0xffff
+      @state_history = 0xfffff
 
       if args.flatten.first.respond_to?(:each_pair)
         init_with_hash(args.flatten.first)
@@ -166,6 +166,7 @@ module Balancer
       options[:userpwd] = username + ':' + password if username
       options[:port] = port.to_i if port
       options[:headers] = { Host: host_header } if host_header
+      options[:followlocation] = true
 
       options
     end
@@ -205,19 +206,14 @@ module Balancer
     def flapping_score
       # similar to nagios style detection: weight more recent state change more
       # http://nagios.sourceforge.net/docs/3_0/flapping.html
-      if @state_history ^ @state_history == 0
-        0
-      else
-        # find and weight state changes
-        count = 0
-        weight = 1.2
-        0.upto(18) do |bit|
-          count += @state_history[bit] == @state_history[bit+1] ? 0 : weight
-          weight -= 0.02
-        end
-
-        count/20
+      count = 0
+      weight = 1.2
+      0.upto(18) do |bit|
+        count += @state_history[bit] == @state_history[bit+1] ? 0 : weight
+        weight -= 0.02
       end
+
+      count/20.0
     end
 
     def hash
